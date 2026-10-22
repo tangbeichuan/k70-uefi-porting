@@ -1,0 +1,22 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerUfsMapDxe
+  FILE_GUID                      = 6D31A8C2-5F47-4E39-B2A1-9C4E7D5A1B63
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerUfsMapDxeEntry
+
+[Sources]
+  VermeerUfsMapDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DebugLib
+  DxeServicesTableLib
+
+[Depex]
+  TRUE

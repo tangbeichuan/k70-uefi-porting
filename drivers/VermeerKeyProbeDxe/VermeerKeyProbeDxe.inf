@@ -1,0 +1,36 @@
+## @file
+#  Key probe: reports which vendor protocols dispatched, then prints every keystroke seen.
+#
+#  Gated behind VERMEER_KEYPROBE in vermeer.dsc / vermeer.fdf (default 0).
+##
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerKeyProbeDxe
+  FILE_GUID                      = 5C1E9A73-2B48-4F6D-8E31-7A9D0C4B6F52
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerKeyProbeDxeEntry
+
+[Sources]
+  VermeerKeyProbeDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  CacheMaintenanceLib
+  DebugLib
+  PrintLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+  DxeServicesTableLib
+  DxeServicesLib
+
+[Protocols]
+  gEfiSimpleTextInProtocolGuid     ## CONSUMES
+
+[Depex]
+  TRUE

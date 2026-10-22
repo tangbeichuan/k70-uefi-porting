@@ -1,0 +1,23 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerUsbVbusDxe
+  FILE_GUID                      = 4A8E2C71-9D53-46B8-8F02-7C51B6E3A9D4
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerUsbVbusDxeEntry
+
+[Sources]
+  VermeerUsbVbusDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+
+[Depex]
+  TRUE

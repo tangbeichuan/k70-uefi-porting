@@ -1,0 +1,33 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerMenuDxe
+  FILE_GUID                      = 4F7A1C2E-93B5-4D68-A1E7-6C2B8F5D3A90
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerMenuDxeEntry
+
+[Sources]
+  VermeerMenuDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  PrintLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+  DxeServicesLib
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiSimpleTextInProtocolGuid
+  gEfiSimpleTextOutProtocolGuid
+
+[Depex]
+  TRUE

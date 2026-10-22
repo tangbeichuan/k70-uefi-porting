@@ -1,0 +1,183 @@
+##
+#  Copyright (c) 2018, Linaro Limited. All rights reserved.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+################################################################################
+#
+# FD Section
+# The [FD] Section is made up of the definition statements and a
+# description of what goes into  the Flash Device Image.  Each FD section
+# defines one flash "device" image.  A flash device image may be one of
+# the following: Removable media bootable image (like a boot floppy
+# image,) an Option ROM image (that would be "flashed" into an add-in
+# card,) a System "Flash"  image (that would be burned into a system's
+# flash) or an Update ("Capsule") image that will be used to update and
+# existing system flash.
+#
+################################################################################
+
+[FD.SILICIUM_UEFI]
+BaseAddress   = $(FD_BASE)|gArmTokenSpaceGuid.PcdFdBaseAddress # The base address of the FLASH Device.
+Size          = $(FD_SIZE)|gArmTokenSpaceGuid.PcdFdSize        # The size in bytes of the FLASH Device
+ErasePolarity = 1
+
+# This one is tricky, it must be: BlockSize * NumBlocks = Size
+BlockSize     = 0x1000
+NumBlocks     = $(FD_BLOCKS)
+
+################################################################################
+#
+# Following are lists of FD Region layout which correspond to the locations of different
+# images within the flash device.
+#
+# Regions must be defined in ascending order and may not overlap.
+#
+# A Layout Region start with a eight digit hex offset (leading "0x" required) followed by
+# the pipe "|" character, followed by the size of the region, also in hex with the leading
+# "0x" characters. Like:
+# Offset|Size
+# PcdOffsetCName|PcdSizeCName
+# RegionType <FV, DATA, or FILE>
+#
+################################################################################
+
+0x00000000|$(FD_SIZE)
+gArmTokenSpaceGuid.PcdFvBaseAddress|gArmTokenSpaceGuid.PcdFvSize
+FV = FVMAIN_COMPACT
+
+################################################################################
+#
+# FV Section
+#
+# [FV] section is used to define what components or modules are placed within a flash
+# device file.  This section also defines order the components and modules are positioned
+# within the image.  The [FV] section consists of define statements, set statements and
+# module statements.
+#
+################################################################################
+
+[FV.FvMain]
+FvNameGuid         = CD8D4C84-20AD-4073-8A28-3400FAE05941
+BlockSize          = 0x1000
+NumBlocks          = 0        # This FV gets compressed so make it just big enough
+FvAlignment        = 8        # FV alignment and FV attributes setting.
+ERASE_POLARITY     = 1
+MEMORY_MAPPED      = TRUE
+STICKY_WRITE       = TRUE
+LOCK_CAP           = TRUE
+LOCK_STATUS        = TRUE
+WRITE_DISABLED_CAP = TRUE
+WRITE_ENABLED_CAP  = TRUE
+WRITE_STATUS       = TRUE
+WRITE_LOCK_CAP     = TRUE
+WRITE_LOCK_STATUS  = TRUE
+READ_DISABLED_CAP  = TRUE
+READ_ENABLED_CAP   = TRUE
+READ_STATUS        = TRUE
+READ_LOCK_CAP      = TRUE
+READ_LOCK_STATUS   = TRUE
+
+  !include Include/APRIORI.inc
+  !include Include/DXE.inc
+  !include Include/RAW.inc
+
+!if $(VERMEER_VENDOR_INPUT) == 1
+# [keys47-drop]   INF Binaries/vermeer/QcomPkg/Drivers/TzDxe/ScmDxeCompat.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/SmemDxe/SmemDxe.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/PmicDxe/PmicDxeLa.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/TLMMDxe/TLMMDxe.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/RpmhDxe/RpmhDxe.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/VcsDxe/VcsDxe.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/DALSYSDxe/DALSYSDxe.inf
+  INF Binaries/vermeer/QcomPkg/Drivers/ButtonsDxe/ButtonsDxe.inf
+!endif
+
+
+!if $(VERMEER_KEYPROBE) == 1
+  INF vermeerPkg/Drivers/VermeerKeyProbeDxe/VermeerKeyProbeDxe.inf
+  INF vermeerPkg/Drivers/VermeerDtbExtnDxe/VermeerDtbExtnDxe.inf
+  INF vermeerPkg/Drivers/VermeerUfsMapDxe/VermeerUfsMapDxe.inf
+
+FILE FREEFORM = 7E5B1C3A-9D24-4E77-9C1B-2A6D5F8E4C31 {
+  SECTION RAW = vermeerPkg/FdtBlob/xbl_ufs.dtb
+}
+!endif
+
+
+!if $(VERMEER_BANNER) == 1
+  INF vermeerPkg/Drivers/VermeerBannerDxe/VermeerBannerDxe.inf
+!endif
+
+
+  # Early frame buffer telemetry (VERMEER_PAINT=1 only). Must live in the
+  # compressed FV: files in FVMAIN_COMPACT are executed in place and GenFv
+  # demands SectionAlignment == FileAlignment for those.
+!if $(VERMEER_PAINT) == 1
+  INF vermeerPkg/Drivers/VermeerPaintDxe/VermeerPaintDxe.inf
+!endif
+
+  # RAM Manager
+!if $(VERMEER_VENDOR_HW) == 1
+  # Needs the RAM partition table from the vendor stack (SMEM/DAL/RPMh).
+  INF SiliciumPkg/Drivers/RamManagerDxe/RamManagerDxe.inf
+!endif
+
+  # SmBios
+  INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+  INF SiliciumPkg/Drivers/SmBiosTableDxe/SmBiosTableDxe.inf
+
+  # ACPI
+  #INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
+  #INF MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
+  #INF RuleOverride = ACPITABLE vermeer/AcpiTables.inf
+
+  # IORT DT
+  INF QcomPkg/Drivers/IortDtDxe/IortDtDxe.inf
+
+  # Device Tree
+  #
+  # Phase 0 (VERMEER_VENDOR_HW = 0) has no driver that consumes the device
+  # tree, and sheng's verified image leaves these disabled as well. BootShim
+  # still appends Resources/DTBs/vermeer.dtb to the boot image, which is what
+  # the previous stage reads for /reserved-memory/splash_region. Re-enable
+  # together with the vendor hardware drivers.
+  #
+  #INF EmbeddedPkg/Drivers/DtPlatformDxe/DtPlatformDxe.inf
+  #FILE FREEFORM = 25462CDA-221F-47DF-AC1D-259CFAA4E326 {
+  #  SECTION RAW = vermeerPkg/FdtBlob/sm8550-xiaomi-vermeer.dtb
+  #  SECTION UI = "Device Tree"
+  #}
+
+  !include QcomPkg/Extra.fdf.inc
+
+[FV.FVMAIN_COMPACT]
+FvAlignment        = 8
+ERASE_POLARITY     = 1
+MEMORY_MAPPED      = TRUE
+STICKY_WRITE       = TRUE
+LOCK_CAP           = TRUE
+LOCK_STATUS        = TRUE
+WRITE_DISABLED_CAP = TRUE
+WRITE_ENABLED_CAP  = TRUE
+WRITE_STATUS       = TRUE
+WRITE_LOCK_CAP     = TRUE
+WRITE_LOCK_STATUS  = TRUE
+READ_DISABLED_CAP  = TRUE
+READ_ENABLED_CAP   = TRUE
+READ_STATUS        = TRUE
+READ_LOCK_CAP      = TRUE
+READ_LOCK_STATUS   = TRUE
+
+  INF SiliciumPkg/Sec/Sec.inf
+
+  FILE FV_IMAGE = 9E21FD93-9C72-4c15-8C4B-E77F1DB2D792 {
+    SECTION GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF PROCESSING_REQUIRED = TRUE {
+      SECTION FV_IMAGE = FVMAIN
+    }
+  }
+
+  !include SiliciumPkg/Common.fdf.inc

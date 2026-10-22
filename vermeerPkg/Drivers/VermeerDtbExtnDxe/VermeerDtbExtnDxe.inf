@@ -1,0 +1,35 @@
+## @file
+#  DTB extension protocol provider.
+#
+#  Publishes 0389B776-625F-11EB-83BE-C741A913DE34 backed by the firmware device tree that XBL
+#  carries in the xbl_config partition (embedded in this FV as a RAW file under mDtbFileGuid).
+#  The SM8550 vendor drivers (UFSDxe, HALIOMMU, PmicDxe, ...) only read device-tree properties
+#  through this protocol, so without it they all fail with EFI_NOT_FOUND.
+#
+#  Gated behind VERMEER_DTBEXTN in vermeer.dsc / vermeer.fdf.
+##
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerDtbExtnDxe
+  FILE_GUID                      = 5B21E7C4-3D18-4F6A-9A20-8C7E51FD42B9
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerDtbExtnDxeEntry
+
+[Sources]
+  VermeerDtbExtnDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DxeServicesLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Depex]
+  TRUE

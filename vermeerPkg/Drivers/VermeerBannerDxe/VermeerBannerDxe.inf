@@ -1,0 +1,36 @@
+/** @file
+  Persistent on-screen banner + heartbeat for the Redmi K70 (vermeer) UEFI port.
+  Gated behind VERMEER_BANNER (default 0) in vermeer.dsc / vermeer.fdf.
+**/
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = VermeerBannerDxe
+  FILE_GUID                      = 3A7D2C64-8B15-4E9F-A2D3-6C50B7E14F28
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerBannerDxeEntry
+
+[Sources]
+  VermeerBannerDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  PrintLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Protocols]
+  gEfiSimpleTextOutProtocolGuid         ## SOMETIMES_CONSUMES   # only used for the "ConOut ok" note
+
+# TRUE, not gEfiSimpleTextOutProtocolGuid: on the real K70 the SimpleTextOut chain
+# (GraphicsConsoleDxe / ConSplitterDxe) did not become available early enough, so the
+# banner never dispatched and BDS ran instead.  The banner's primary channel is DEBUG
+# (-> platform SerialPortLib -> FrameBufferSerialPortLib), which needs no protocol.
+[Depex]
+  TRUE

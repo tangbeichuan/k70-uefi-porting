@@ -1,0 +1,20 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerStage2App
+  FILE_GUID                      = 2C9A63D4-8B17-4E52-A6F1-9D0C7B3E5A48
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerStage2AppEntry
+
+[Sources]
+  VermeerStage2App.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  DebugLib
+  BaseLib

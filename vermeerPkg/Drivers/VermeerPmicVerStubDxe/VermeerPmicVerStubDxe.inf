@@ -1,0 +1,22 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerPmicVerStubDxe
+  FILE_GUID                      = 3F6C1D92-85B4-4E27-9C63-1A8F5D2E7B04
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerPmicVerStubDxeEntry
+
+[Sources]
+  VermeerPmicVerStubDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  DebugLib
+
+[Depex]
+  TRUE

@@ -1,0 +1,30 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerLogDiskDxe
+  FILE_GUID                      = 9C5E7A31-4B28-4F6D-8A19-2D7C6E5B3A84
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerLogDiskDxeEntry
+
+[Sources]
+  VermeerLogDiskDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+  DebugLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  BaseLib
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+
+[Depex]
+  TRUE

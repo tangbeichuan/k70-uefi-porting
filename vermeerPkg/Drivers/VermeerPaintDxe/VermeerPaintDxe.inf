@@ -1,0 +1,29 @@
+/** @file
+  Early frame buffer telemetry for the Redmi K70 (vermeer) UEFI port.
+**/
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = VermeerPaintDxe
+  FILE_GUID                      = 7E2C4B91-5A3D-4F28-9C6B-1D8E5A0F3B72
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerPaintDxeEntry
+
+[Sources]
+  VermeerPaintDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  SiliciumPkg/SiliciumPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryMapHelperLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Depex]
+  TRUE

@@ -1,0 +1,29 @@
+## @file
+#  Device-tree dump: prints the configuration table list and the FDT the firmware received.
+#
+#  Gated behind VERMEER_DTDUMP in vermeer.dsc / vermeer.fdf (default 0).
+##
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VermeerDtDumpDxe
+  FILE_GUID                      = 7A3C51B4-9E62-4D1F-8C0A-2B5E6D7F1A93
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = VermeerDtDumpDxeEntry
+
+[Sources]
+  VermeerDtDumpDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  HobLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+
+[Depex]
+  TRUE

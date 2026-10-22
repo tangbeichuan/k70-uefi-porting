@@ -1,0 +1,1 @@
+sed -n '7341,7374p' /tmp/vb.dts

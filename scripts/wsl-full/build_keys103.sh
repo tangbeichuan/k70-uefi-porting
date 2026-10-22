@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# keys103 = keys13a - UFSDxe  (the one module that the real-device log now dies in)
+#
+# keys13a on the real device (photo 16:35):
+#   ... PwrUtilsDxe, NpaDxe, RpmhDxe, VcsDxe, ICBDxe, ShmBridgeDxeLA, TLMMDxe, SPMIDxe ...
+#   ResetSystemRuntimeDxe, DiskIoDxe, PartitionDxe, EnglishDxe, UFSDxe
+#   ReplaceTableEntry: splitting block entry with MMU disabled
+#   ASSERT_EFI_ERROR (Status = Not Found)
+#   ERROR: C9000002:V03000007 1D 0D35CD8E-97EA-4F9A-96AF-0F0D89F76567   <- FILE_GUID of UFSDxe
+#   ASSERT [UfsCoreBspLib.c +163]: !EFI_ERROR (eResult)
+#
+# So the ULog hypothesis was RIGHT: NpaDxe no longer asserts, the stack now runs 15 modules
+# further and stops inside UFSDxe.  UFS has nothing to do with reading the volume key, so for
+# this experiment it is one more tail module to drop, exactly like USB/PIL before.
+set -e -o pipefail
+
+TAG=${1:-keys103}
+UEFI=/root/k70/uefi
+PKG=$UEFI/Platforms/Xiaomi/vermeerPkg
+TOOLS=/mnt/d/本地项目-01/_k70port_extract
+FD_OUT=$TOOLS/qemu-fw/SILICIUM_UEFI-$TAG.fd
+
+cd "$UEFI"
+
+cp "$PKG/vermeer.dsc" /tmp/vermeer.dsc.bak
+cp "$PKG/vermeer.fdf" /tmp/vermeer.fdf.bak
+cp "$PKG/Include/DXE.inc" /tmp/DXE.inc.bak
+cp "$PKG/Include/APRIORI.inc" /tmp/APRIORI.inc.bak
+restore() {
+  cp /tmp/vermeer.dsc.bak "$PKG/vermeer.dsc"
+  cp /tmp/vermeer.fdf.bak "$PKG/vermeer.fdf"
+  cp /tmp/DXE.inc.bak "$PKG/Include/DXE.inc"
+  cp /tmp/APRIORI.inc.bak "$PKG/Include/APRIORI.inc"
+}
+trap restore EXIT
+
+mkdir -p "$PKG/Drivers/VermeerKeyProbeDxe"
+cp "$TOOLS/port-drivers/VermeerKeyProbeDxe/VermeerKeyProbeDxe.c" "$PKG/Drivers/VermeerKeyProbeDxe/"
+cp "$TOOLS/port-drivers/VermeerKeyProbeDxe/VermeerKeyProbeDxe.inf" "$PKG/Drivers/VermeerKeyProbeDxe/"
+python3 "$TOOLS/wsl/gates.py" keyprobe    "$PKG/vermeer.dsc" "$PKG/vermeer.fdf"
+
+python3 /mnt/d/本地项目-01/_tools/patch_menu101.py  # re-apply after gates.py
+python3 "$TOOLS/wsl/gates.py" vendorinput "$PKG/vermeer.dsc" "$PKG/vermeer.fdf"
+python3 "$TOOLS/wsl/gates.py" set "$PKG/vermeer.dsc" VERMEER_KEYPROBE 1
+
+python3 - "$PKG" <<'PY'
+import re, sys, pathlib
+
+pkg = pathlib.Path(sys.argv[1])
+
+# keys13a list, with ULogDxe kept back in (that is what fixed NpaDxe) and UFSDxe added to the
+# drop list.  Everything else is untouched, so this is still a one-module experiment vs keys13a.
+DROP = [
+    "usb", "xhci", "pildxe", "pilproxy", "spss", "tzdxe", "charger", "chg",
+    "sdcc", "featureenabler", "ddrinfo", "limitsdxe", "gpipdxe", "gpidexe", "ucdxe",
+    "rngdxe", "tsens", "clockdxe", "displaydxe", "rammanagerdxe",
+    "ufsdxe",
+]
+
+dsc = pkg / "vermeer.dsc"
+s = dsc.read_text(encoding="utf-8")
+s = re.sub(r"^( *VERMEER_VENDOR_HW *= *)\d+", r"\g<1>1", s, count=1, flags=re.M)
+s = re.sub(r"^( *VERMEER_VENDOR_INPUT *= *)\d+", r"\g<1>0", s, count=1, flags=re.M)
+dsc.write_text(s, encoding="utf-8")
+
+dropped, kept = [], []
+for name in ("vermeer.dsc", "vermeer.fdf", "Include/DXE.inc", "Include/APRIORI.inc"):
+    p = pkg / name
+    if not p.exists():
+        continue
+    out = []
+    for line in p.read_text(encoding="utf-8").splitlines(keepends=True):
+        low = line.lower()
+        if low.lstrip().startswith("inf") and "binaries/vermeer" in low:
+            if any(token in low for token in DROP):
+                out.append("# [keys103-drop] " + line)
+                dropped.append(line.strip())
+                continue
+            kept.append(line.strip())
+        out.append(line)
+    p.write_text("".join(out), encoding="utf-8")
+
+print("kept vendor modules:", len(set(kept)))
+for k in sorted(set(kept)):
+    print("  KEEP  ", k)
+print("dropped:", len(dropped))
+PY
+
+source /root/k70/venv/bin/activate
+python3 build_uefi.py -d vermeer -m 0 -r DEBUG 2>&1 | tail -6
+
+FD=$UEFI/Build/vermeerPkg/DEBUG_CLANGPDB/FV/SILICIUM_UEFI.fd
+[ -f "$FD" ] || { echo "build produced no FD"; exit 1; }
+cp "$FD" "$FD_OUT"
+cp "$UEFI/Build/vermeerPkg/DEBUG_CLANGPDB/FV/Guid.xref" "/tmp/guid-$TAG.xref"
+echo "=== $TAG FD ==="; ls -l "$FD_OUT"; sha256sum "$FD_OUT"
+echo "--- UFSDxe in FV? (should be nothing) ---"
+grep -i 'UFSDxe' "/tmp/guid-$TAG.xref" || echo "  OK: no UFSDxe"
+echo "--- NpaDxe / ULogDxe / ButtonsDxe in FV? ---"
+grep -iE ' (NpaDxe|ULogDxe|ButtonsDxe|SPMIDxe)$' "/tmp/guid-$TAG.xref"

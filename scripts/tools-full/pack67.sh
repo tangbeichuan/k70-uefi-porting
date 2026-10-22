@@ -1,0 +1,3 @@
+set +e
+cd /mnt/d/本地项目-01/_k70port_extract/wsl
+bash pack_keys.sh "/mnt/d/本地项目-01/_k70port_extract/qemu-fw/SILICIUM_UEFI-keys67.fd" keys67 2>&1 | tail -3

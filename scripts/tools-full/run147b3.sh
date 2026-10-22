@@ -1,0 +1,5 @@
+set +e
+cd /mnt/d/本地项目-01/_k70port_extract/wsl
+bash run_keys147b.sh 2>&1 | tail -12
+echo "=== check dispatch order from build log (APRIORI dump) ==="
+grep -n 'VermeerUsbVbusDxe' /tmp/keys147b-build.log | head -5

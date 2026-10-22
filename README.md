@@ -67,3 +67,54 @@ artifacts/  里程碑镜像（keys14/44/70/121/150/168），可直接 fastboot b
 ## 许可
 
 MIT。上游组件（Project Silicium / Mu / Qualcomm binaries）各自遵循其许可。
+---
+
+## 完整性说明（这个仓库里到底有什么、没有什么）
+
+### ✅ 已收录
+
+| 类别 | 内容 | 位置 |
+|---|---|---|
+| 自研驱动 | 9 个 DXE 驱动**完整源码**（`.c` + `.inf`） | `drivers/` |
+| 设计文档 | 9 篇（架构/驱动/USB/DTBExtn/UFS/踩坑/版本/日志） | `docs/01..09-*.md` |
+| 真机完整记录 | 1100+ 行、从 keys0 到 keys168 的逐版本实测记录（含 sha256、屏上原文） | `docs/10-真机实验完整记录.md` |
+| 逆向分析报告 | 24 份逐版本分析报告（寄存器解码、反汇编结论、修复方案） | `docs/reports/` |
+| 构建脚本 | 295 个 WSL 构建/打包脚本（`build_keys*.sh`/`run_keys*.sh`/`pack_keys.sh`/`gates.py`…） | `scripts/wsl-full/` |
+| 补丁脚本 | 940 个 `.py/.sh/.ps1` 工具与补丁（`patch_extn136.py`、`patch_usb126.py`…） | `scripts/tools-full/` |
+| 里程碑镜像 | 60 个可直接 `fastboot boot` 的历史镜像 | `artifacts/` |
+
+### ❌ 未收录（以及为什么）
+
+| 内容 | 为什么没有 |
+|---|---|
+| **上游 Mu-Silicium / Project Silicium 源码树** | 那是别人的项目（`Platforms/Xiaomi/vermeerPkg` 基于 Kailua SM8550 支持）。本仓库只提供**我们的驱动与补丁**；构建时需自取上游，见下节 |
+| **高通 vendor 二进制**（`Binaries/vermeer/QcomPkg/**/*.efi`） | 厂商专有二进制，不可再分发 |
+| **从设备提取的镜像**（`xbl_a.img`、`boot_a.img`、`vendor_boot_a.img`、`recovery_a.img`） | 含设备专有数据/厂商内容，不适合公开 |
+| **完整 `vermeer.fdf` / `vermeer.dsc` 成品** | 它们是上游文件 + 我们的补丁；补丁脚本已全部收录，可复现 |
+
+### 🔧 复现构建（需要自备上游）
+
+```bash
+# 1. 取上游（Project Silicium，SM8550 Kailua 支持）
+git clone https://github.com/Project-Silicium/Mu-Silicium.git
+cd Mu-Silicium
+
+# 2. 应用本仓库的驱动与补丁
+cp -r <this-repo>/drivers/Vermeer*        Platforms/Xiaomi/vermeerPkg/Drivers/
+cp    <this-repo>/drivers/VermeerDtDumpDxe/* Platforms/Xiaomi/vermeerPkg/Drivers/VermeerDtDumpDxe/
+
+# 3. 注册（dsc Components / fdf / APRIORI.inc）
+python3 <this-repo>/scripts/patches/patch_extn136.py Platforms/Xiaomi/vermeerPkg
+python3 <this-repo>/scripts/patches/patch_menu101.py Platforms/Xiaomi/vermeerPkg
+
+# 4. 编译（WSL / clang+LLD）
+python3 build_uefi.py -d vermeer -m 0 -r DEBUG
+```
+
+### ⚠️ 关键工程规则（血泪，务必先读）
+
+见 `docs/07-踩坑清单与工程规则.md`，其中三条最容易致命：
+
+1. **不要往 FV 里新增独立模块**（会改布局把引导搞挂）——新功能内嵌进已有驱动；
+2. `binaries` 的 INF 只能出现在 `Include/APRIORI.inc`，同时出现在 `Include/DXE.inc` 会 `GenFv ERROR 2000: same file GUID`；
+3. `gBS->AddMemorySpace` **只登记 GCD、不建页表**；MMIO 必须写进 PEI 的 `MemoryMapLib.c` 才会真正映射。

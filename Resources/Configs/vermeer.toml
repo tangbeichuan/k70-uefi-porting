@@ -1,0 +1,29 @@
+#
+# Boot Shim Configs
+#
+[boot_shim]
+requires_kernel_header = true
+# 1 = BootShim paints progress bands into the framebuffer (see doc 8.9)
+paint_marker = false
+
+#
+# UEFI FD Configs
+# K70 stock "UEFI FD" region: 0xA7000000 + 0x00400000 (uefiplatLA.cfg)
+# 3 MiB image at the top of that window, same placement as sheng/nuwa.
+#
+[uefi_fd]
+base = 0xA7100000
+size = 0x400000
+
+#
+# Android Boot Image Kernel Configs
+#
+[boot_image_kernel]
+kernel_compression = "gzip"
+append_dtb         = true
+
+#
+# Android Boot Image Configs
+#
+[boot_image]
+header_version = 1
